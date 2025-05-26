@@ -7,26 +7,23 @@ pygame.init()
 screen_width = 1920
 screen_height = 1080
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Gra z animacją kierunkową i bezczynnością")
+pygame.display.set_caption("Gra z portalami i kryształem")
 
 # Wczytanie mapy
 map_width = 2800
 map_height = 2800
 background = pygame.image.load('map.png').convert()
 
-# Wczytanie wszystkich klatek animacji
+# Wczytanie animacji postaci
 character_idle = pygame.image.load('character.png').convert_alpha()
-
 walk_right = [pygame.image.load(f'character{i}.png').convert_alpha() for i in range(1, 5)]
 walk_left  = [pygame.image.load(f'character{i}.png').convert_alpha() for i in range(5, 9)]
 walk_up    = [pygame.image.load(f'character{i}.png').convert_alpha() for i in range(9, 11)]
 walk_down  = [pygame.image.load(f'character{i}.png').convert_alpha() for i in range(11, 13)]
-
-# Klatki idle-look
 character_look_left = pygame.image.load('characterlookleft.png').convert_alpha()
 character_look_right = pygame.image.load('characterlookright.png').convert_alpha()
 
-# Portale i kryształ
+# Portal i kryształ
 portal1_pos = (1838, 152)
 portal2_pos = (1437, 2305)
 portal_image_idle = pygame.image.load("EmptyPortal.png").convert_alpha()
@@ -42,9 +39,8 @@ crystal_taken = False
 portal_active = False
 teleporting = False
 teleport_cooldown = 0
-show_character = True
 
-# Początkowa pozycja postaci
+# Pozycja postaci
 character = character_idle
 char_width = character.get_width()
 char_height = character.get_height()
@@ -62,18 +58,12 @@ last_move_time = time.time()
 idle_stage = 0
 idle_triggered = False
 
-clock = pygame.time.Clock()
-running = True
-
-# Lista zablokowanych obszarów
+# Lista kolizji - skrócona
 blocked_areas = [
     pygame.Rect(0, 194, 768 - 0, 230 - 194),
     pygame.Rect(0, 0, 329 - 0, 2800 - 0),
     pygame.Rect(66, 2243, 825 - 66, 2800 - 2243),
     pygame.Rect(785, 2556, 2800 - 785, 2800 - 2556),
-    pygame.Rect(1770, 1936, 2800 - 1770, 2354 - 1936),
-    pygame.Rect(2489, 1075, 2800 - 2489, 1959 - 1075),
-    pygame.Rect(1778, 1115, 2647 - 1778, 1283 - 1115),
     pygame.Rect(1950, 1453, 2242 - 1950, 1624 - 1453),
     pygame.Rect(956, 1289, 1289 - 956, 1446 - 1289),
     pygame.Rect(1125, 1138, 1307 - 1125, 1252 - 1138),
@@ -91,18 +81,21 @@ blocked_areas = [
     pygame.Rect(1120, 528, 2074 - 1120, 908 - 528),
 ]
 
-# Funkcja kolizji
+# Funkcje
 def check_collision(new_x, new_y):
     temp_rect = pygame.Rect(new_x, new_y, char_width, char_height)
     return any(temp_rect.colliderect(rect) for rect in blocked_areas)
+
 def is_near(x1, y1, x2, y2, distance=50):
     return abs(x1 - x2) < distance and abs(y1 - y2) < distance
-# Główna pętla
+
 clock = pygame.time.Clock()
 running = True
 
 while running:
+    keys = pygame.key.get_pressed()
     interact = False
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -110,30 +103,20 @@ while running:
             if event.key == pygame.K_e:
                 interact = True
 
-    keys = pygame.key.get_pressed()
     dx, dy = 0, 0
+    if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx = -speed
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]: dx = speed
+    if keys[pygame.K_UP] or keys[pygame.K_w]: dy = -speed
+    if keys[pygame.K_DOWN] or keys[pygame.K_s]: dy = speed
 
-    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        dx = -speed
-    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        dx = speed
-    if keys[pygame.K_UP] or keys[pygame.K_w]:
-        dy = -speed
-    if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        dy = speed
-
-    # Przemieszczanie postaci
     new_x = char_x + dx
     new_y = char_y + dy
     if not check_collision(new_x, new_y):
         char_x = new_x
         char_y = new_y
 
-    # Ograniczenia ruchu
     char_x = max(0, min(char_x, map_width - char_width))
     char_y = max(0, min(char_y, map_height - char_height))
-
-    # Czy się ruszamy
     moving = dx != 0 or dy != 0
 
     if moving:
@@ -142,7 +125,6 @@ while running:
             walk_timer = 0
             walk_frame = (walk_frame + 1)
 
-        # Kierunek dominujący
         if abs(dx) >= abs(dy):
             if dx > 0:
                 direction = "right"
@@ -160,16 +142,11 @@ while running:
 
         last_direction = direction
         character = frames[walk_frame % len(frames)]
-
-        # Resetuj idle
         last_move_time = time.time()
         idle_triggered = False
         idle_stage = 0
-
     else:
-        # Bezczynność
         current_time = time.time()
-
         if not idle_triggered and current_time - last_move_time >= 10:
             idle_triggered = True
             idle_stage = 1
@@ -192,12 +169,13 @@ while running:
             character = character_idle
             walk_timer = 0
             walk_frame = 0
-        # Interakcja z kryształem
+
+    # Interakcja z kryształem
     if not crystal_taken and is_near(char_x, char_y, *crystal_pos):
         if interact:
             crystal_taken = True
 
-    # Interakcja z portalem
+    # Interakcja z portalami
     for idx, (px, py) in enumerate([portal1_pos, portal2_pos]):
         if is_near(char_x, char_y, px, py):
             if crystal_taken and interact:
@@ -206,11 +184,9 @@ while running:
                 elif portal_active and not teleporting:
                     teleporting = True
                     teleport_cooldown = 30
-                    show_character = False
+                    character = None
                     teleport_target = portal2_pos if (px, py) == portal1_pos else portal1_pos
 
-    # Kamera
-    camera_x = char_x + char_width // 2 - screen_width // 2
     # Animacja portali
     if portal_active:
         portal_timer += 1
@@ -226,17 +202,18 @@ while running:
             char_x, char_y = teleport_target
             teleporting = False
             character = character_idle
-            show_character = True
             last_move_time = time.time()
+
+    # Kamera
+    camera_x = char_x + char_width // 2 - screen_width // 2
     camera_y = char_y + char_height // 2 - screen_height // 2
     camera_x = max(0, min(camera_x, map_width - screen_width))
     camera_y = max(0, min(camera_y, map_height - screen_height))
 
     # Rysowanie
     screen.blit(background, (0, 0), (camera_x, camera_y, screen_width, screen_height))
-    if show_character:
-        screen.blit(character, (char_x - camera_x, char_y - camera_y))
-     # Rysowanie portali
+
+    # Rysowanie portali
     for px, py in [portal1_pos, portal2_pos]:
         if teleporting:
             frame = portal_working[portal_frame]
@@ -249,14 +226,15 @@ while running:
     # Rysowanie kryształu
     if not crystal_taken:
         screen.blit(crystal_image, (crystal_pos[0] - camera_x, crystal_pos[1] - camera_y))
+
+    # Rysowanie postaci
+    if character:
+        screen.blit(character, (char_x - camera_x, char_y - camera_y))
+
     # Rysowanie zablokowanych obszarów (debug)
     for rect in blocked_areas:
-        pygame.draw.rect(
-            screen,
-            (255, 0, 0),
-            (rect.x - camera_x, rect.y - camera_y, rect.width, rect.height),
-            2
-        )
+        pygame.draw.rect(screen, (255, 0, 0), (rect.x - camera_x, rect.y - camera_y, rect.width, rect.height), 2)
+
     pygame.display.update()
     clock.tick(60)
 
