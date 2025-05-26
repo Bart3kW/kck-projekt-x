@@ -26,6 +26,24 @@ walk_down  = [pygame.image.load(f'character{i}.png').convert_alpha() for i in ra
 character_look_left = pygame.image.load('characterlookleft.png').convert_alpha()
 character_look_right = pygame.image.load('characterlookright.png').convert_alpha()
 
+# Portale i kryształ
+portal1_pos = (1838, 152)
+portal2_pos = (1437, 2305)
+portal_image_idle = pygame.image.load("EmptyPortal.png").convert_alpha()
+portal_waiting = [pygame.image.load(f"PortalWaiting{i}.png").convert_alpha() for i in range(1, 5)]
+portal_working = [pygame.image.load(f"PortalWorking{i}.png").convert_alpha() for i in range(1, 5)]
+portal_frame = 0
+portal_timer = 0
+
+crystal_pos = (1394, 1560)
+crystal_image = pygame.image.load("Crystal.png").convert_alpha()
+crystal_taken = False
+
+portal_active = False
+teleporting = False
+teleport_cooldown = 0
+show_character = True
+
 # Początkowa pozycja postaci
 character = character_idle
 char_width = character.get_width()
@@ -77,15 +95,20 @@ blocked_areas = [
 def check_collision(new_x, new_y):
     temp_rect = pygame.Rect(new_x, new_y, char_width, char_height)
     return any(temp_rect.colliderect(rect) for rect in blocked_areas)
-
+def is_near(x1, y1, x2, y2, distance=50):
+    return abs(x1 - x2) < distance and abs(y1 - y2) < distance
 # Główna pętla
 clock = pygame.time.Clock()
 running = True
 
 while running:
+    interact = False
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_e:
+                interact = True
 
     keys = pygame.key.get_pressed()
     dx, dy = 0, 0
@@ -169,16 +192,63 @@ while running:
             character = character_idle
             walk_timer = 0
             walk_frame = 0
+        # Interakcja z kryształem
+    if not crystal_taken and is_near(char_x, char_y, *crystal_pos):
+        if interact:
+            crystal_taken = True
+
+    # Interakcja z portalem
+    for idx, (px, py) in enumerate([portal1_pos, portal2_pos]):
+        if is_near(char_x, char_y, px, py):
+            if crystal_taken and interact:
+                if not portal_active:
+                    portal_active = True
+                elif portal_active and not teleporting:
+                    teleporting = True
+                    teleport_cooldown = 30
+                    show_character = False  # <-- DODAJ TĘ FLAGĘ
+                    teleport_target = portal2_pos if (px, py) == portal1_pos else portal1_pos
 
     # Kamera
     camera_x = char_x + char_width // 2 - screen_width // 2
+    # Animacja portali
+    if portal_active:
+        portal_timer += 1
+        if portal_timer >= 10:
+            portal_timer = 0
+            portal_frame = (portal_frame + 1) % 4
+
+    # Teleportacja
+    if teleporting:
+        if teleport_cooldown > 0:
+            teleport_cooldown -= 1
+        else:
+            char_x, char_y = teleport_target
+            teleporting = False
+            character = character_idle
+            show_character = True
+            last_move_time = time.time()
     camera_y = char_y + char_height // 2 - screen_height // 2
     camera_x = max(0, min(camera_x, map_width - screen_width))
     camera_y = max(0, min(camera_y, map_height - screen_height))
 
     # Rysowanie
     screen.blit(background, (0, 0), (camera_x, camera_y, screen_width, screen_height))
-    screen.blit(character, (char_x - camera_x, char_y - camera_y))
+    if show_character:
+        screen.blit(character, (char_x - camera_x, char_y - camera_y))
+     # Rysowanie portali
+    for px, py in [portal1_pos, portal2_pos]:
+        if teleporting:
+            frame = portal_working[portal_frame]
+        elif portal_active:
+            frame = portal_waiting[portal_frame]
+        else:
+            frame = portal_image_idle
+        screen.blit(frame, (px - camera_x, py - camera_y))
+
+    # Rysowanie kryształu
+    if not crystal_taken:
+        screen.blit(crystal_image, (crystal_pos[0] - camera_x, crystal_pos[1] - camera_y))
     # Rysowanie zablokowanych obszarów (debug)
     for rect in blocked_areas:
         pygame.draw.rect(
