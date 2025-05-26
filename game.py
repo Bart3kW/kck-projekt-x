@@ -206,7 +206,7 @@ while running:
                 elif portal_active and not teleporting:
                     teleporting = True
                     teleport_cooldown = 30
-                    show_character = False  # <-- DODAJ TĘ FLAGĘ
+                    show_character = False
                     teleport_target = portal2_pos if (px, py) == portal1_pos else portal1_pos
 
     # Kamera
