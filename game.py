@@ -4,8 +4,9 @@ import time
 pygame.init()
 
 # Ustawienia okna
-screen_width = 1920
-screen_height = 1080
+infoObject = pygame.display.Info()
+screen_width = infoObject.current_w
+screen_height = infoObject.current_h
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Gra z portalami i kryształem")
 
@@ -32,7 +33,11 @@ portal_working = [pygame.image.load(f"PortalWorking{i}.png").convert_alpha() for
 portal_frame = 0
 portal_timer = 0
 
-crystal_pos = (1394, 1560)
+# Posąg startowy (spawn)
+spawn_pos = (1350, 1560)
+spawn_image = pygame.image.load("Spawn.png").convert_alpha()
+
+crystal_pos = (2565, 688)
 crystal_image = pygame.image.load("Crystal.png").convert_alpha()
 crystal_taken = False
 
@@ -40,12 +45,12 @@ portal_active = False
 teleporting = False
 teleport_cooldown = 0
 
-# Pozycja postaci
+# Pozycja postaci — start na posągu
 character = character_idle
 char_width = character.get_width()
 char_height = character.get_height()
-char_x = (map_width - char_width) // 2
-char_y = (map_height - char_height) // 2
+char_x = spawn_pos[0] + (spawn_image.get_width() // 2) - (char_width // 2)
+char_y = spawn_pos[1] - char_height
 
 # Ruch i animacja
 speed = 5
@@ -226,7 +231,8 @@ while running:
     # Rysowanie kryształu
     if not crystal_taken:
         screen.blit(crystal_image, (crystal_pos[0] - camera_x, crystal_pos[1] - camera_y))
-
+    # Rysowanie posągu (spawn)
+    screen.blit(spawn_image, (spawn_pos[0] - camera_x, spawn_pos[1] - camera_y))
     # Rysowanie postaci
     if character:
         screen.blit(character, (char_x - camera_x, char_y - camera_y))
