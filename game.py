@@ -1,5 +1,6 @@
 import pygame
 import time
+import menu
 
 pygame.init()
 
@@ -45,7 +46,7 @@ portal_active = False
 teleporting = False
 teleport_cooldown = 0
 
-# Pozycja postaci — start na posągu
+# Pozycja postaci
 character = character_idle
 char_width = character.get_width()
 char_height = character.get_height()
@@ -63,7 +64,7 @@ last_move_time = time.time()
 idle_stage = 0
 idle_triggered = False
 
-# Lista kolizji - skrócona
+# Blokady
 blocked_areas = [
     pygame.Rect(0, 194, 768 - 0, 230 - 194),
     pygame.Rect(0, 0, 329 - 0, 2800 - 0),
@@ -86,6 +87,14 @@ blocked_areas = [
     pygame.Rect(1120, 528, 2074 - 1120, 908 - 528),
 ]
 
+# Przycisk menu
+rack_image = pygame.image.load("Rack.png").convert_alpha()
+rack_original = rack_image
+rack_hovered = pygame.transform.scale(rack_image, (int(rack_image.get_width() * 0.9), int(rack_image.get_height() * 0.9)))
+rack_rect = rack_image.get_rect()
+rack_rect.topright = (screen_width - 10, 10)
+menu_open = False
+
 # Funkcje
 def check_collision(new_x, new_y):
     temp_rect = pygame.Rect(new_x, new_y, char_width, char_height)
@@ -107,6 +116,13 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
                 interact = True
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if not menu_open and rack_rect.collidepoint(pygame.mouse.get_pos()):
+                menu_open = True
+            elif menu_open:
+                x_rect = menu.draw_menu(screen)
+                if x_rect.collidepoint(pygame.mouse.get_pos()):
+                    menu_open = False
 
     dx, dy = 0, 0
     if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx = -speed
@@ -131,19 +147,11 @@ while running:
             walk_frame = (walk_frame + 1)
 
         if abs(dx) >= abs(dy):
-            if dx > 0:
-                direction = "right"
-                frames = walk_right
-            else:
-                direction = "left"
-                frames = walk_left
+            direction = "right" if dx > 0 else "left"
+            frames = walk_right if dx > 0 else walk_left
         else:
-            if dy > 0:
-                direction = "down"
-                frames = walk_down
-            else:
-                direction = "up"
-                frames = walk_up
+            direction = "down" if dy > 0 else "up"
+            frames = walk_down if dy > 0 else walk_up
 
         last_direction = direction
         character = frames[walk_frame % len(frames)]
@@ -175,7 +183,7 @@ while running:
             walk_timer = 0
             walk_frame = 0
 
-    # Interakcja z kryształem
+# Interakcja z kryształem
     if not crystal_taken and is_near(char_x, char_y, *crystal_pos):
         if interact:
             crystal_taken = True
@@ -209,16 +217,13 @@ while running:
             character = character_idle
             last_move_time = time.time()
 
-    # Kamera
     camera_x = char_x + char_width // 2 - screen_width // 2
     camera_y = char_y + char_height // 2 - screen_height // 2
     camera_x = max(0, min(camera_x, map_width - screen_width))
     camera_y = max(0, min(camera_y, map_height - screen_height))
 
-    # Rysowanie
     screen.blit(background, (0, 0), (camera_x, camera_y, screen_width, screen_height))
 
-    # Rysowanie portali
     for px, py in [portal1_pos, portal2_pos]:
         if teleporting:
             frame = portal_working[portal_frame]
@@ -228,18 +233,24 @@ while running:
             frame = portal_image_idle
         screen.blit(frame, (px - camera_x, py - camera_y))
 
-    # Rysowanie kryształu
     if not crystal_taken:
         screen.blit(crystal_image, (crystal_pos[0] - camera_x, crystal_pos[1] - camera_y))
-    # Rysowanie posągu (spawn)
+
     screen.blit(spawn_image, (spawn_pos[0] - camera_x, spawn_pos[1] - camera_y))
-    # Rysowanie postaci
+
     if character:
         screen.blit(character, (char_x - camera_x, char_y - camera_y))
 
-    # Rysowanie zablokowanych obszarów (debug)
     for rect in blocked_areas:
         pygame.draw.rect(screen, (255, 0, 0), (rect.x - camera_x, rect.y - camera_y, rect.width, rect.height), 2)
+
+    mouse_pos = pygame.mouse.get_pos()
+    current_rack = rack_hovered if rack_rect.collidepoint(mouse_pos) else rack_original
+    current_rack_rect = current_rack.get_rect(topright=rack_rect.topright)
+    screen.blit(current_rack, current_rack_rect)
+
+    if menu_open:
+        menu.draw_menu(screen)
 
     pygame.display.update()
     clock.tick(60)
