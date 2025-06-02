@@ -1,0 +1,71 @@
+Quiz do przedmiotu
+
+Pytanie 1
+Jak nazywa się prowadzący wykład z Analizy Matematycznej?
+A) dr hab. Kowalski
+B) (Wpisz nazwisko prowadzącego) *
+C) prof. dr inż. Nowak
+D) Nie wiadomo
+
+Pytanie 2
+Czym jest granica ciągu?
+A) Liczba, do której ciąg dąży *
+B) Największy wyraz ciągu
+C) Pierwszy wyraz ciągu
+D) Liczba losowa
+
+Pytanie 3
+Ciąg zbieżny to taki, który:
+A) Ma tylko liczby całkowite
+B) Dąży do konkretnej liczby *
+C) Rośnie bez ograniczeń
+D) Zmienia znaki
+
+Pytanie 4
+Funkcja jest ciągła w punkcie, jeśli:
+A) Nie ma tam asymptoty
+B) Jest tam równa zeru
+C) Ma tam pochodną
+D) Jej wartość w punkcie i granica są równe *
+
+Pytanie 5
+Pochodna funkcji opisuje:
+A) Kolor wykresu
+B) Tempo zmiany funkcji (nachylenie) *
+C) Ilość miejsc zerowych
+D) Liczby całkowite
+
+Pytanie 6
+Czym jest asymptota?
+A) Granica ciągu geometrycznego
+B) Wartość największa funkcji
+C) Prosta, do której wykres się zbliża *
+D) Liczba całkowita
+
+Pytanie 7
+Które z poniższych pojęć NIE jest związane z analizą matematyczną?
+A) Ciąg
+B) Pochodna
+C) Macierz odwrotna *
+D) Granica
+
+Pytanie 8
+Jeśli funkcja ma pochodną w danym punkcie, to:
+A) Może nie być ciągła
+B) Musi być ciągła w tym punkcie *
+C) Musi mieć wartość równą zeru
+D) Nie ma ekstremów lokalnych
+
+Pytanie 9
+Jak zapisujemy granicę ciągu an, gdy n dąży do nieskończoności i granica wynosi a?
+A) lim an = nieskończoność
+B) granica an = a
+C) an -> a
+D) lim n->nieskończoność an = a *
+
+Pytanie 10
+Czego dotyczy twierdzenie o granicy funkcji w punkcie?
+A) Że każda funkcja ma granicę
+B) Że wartości funkcji zbliżają się do jednej liczby, gdy argument zbliża się do danego punktu *
+C) Że wykres przecina oś X
+D) Że funkcja ma pochodną
