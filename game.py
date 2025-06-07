@@ -16,6 +16,9 @@ map_width = 2800
 map_height = 2800
 background = pygame.image.load('map.png').convert()
 
+# Wczytanie mapy kolizji (czerwony = zablokowany)
+collision_map = pygame.image.load('collision_map.png').convert()
+
 # Wczytanie animacji postaci
 character_idle = pygame.image.load('character.png').convert_alpha()
 walk_right = [pygame.image.load(f'character{i}.png').convert_alpha() for i in range(1, 5)]
@@ -64,29 +67,6 @@ last_move_time = time.time()
 idle_stage = 0
 idle_triggered = False
 
-# Blokady
-blocked_areas = [
-    pygame.Rect(0, 194, 768 - 0, 230 - 194),
-    pygame.Rect(0, 0, 329 - 0, 2800 - 0),
-    pygame.Rect(66, 2243, 825 - 66, 2800 - 2243),
-    pygame.Rect(785, 2556, 2800 - 785, 2800 - 2556),
-    pygame.Rect(1950, 1453, 2242 - 1950, 1624 - 1453),
-    pygame.Rect(956, 1289, 1289 - 956, 1446 - 1289),
-    pygame.Rect(1125, 1138, 1307 - 1125, 1252 - 1138),
-    pygame.Rect(966, 1553, 1287 - 966, 1615 - 1553),
-    pygame.Rect(211, 1882, 489 - 211, 2051 - 1882),
-    pygame.Rect(320, 1332, 618 - 320, 1727 - 1332),
-    pygame.Rect(400, 639, 855 - 400, 853 - 639),
-    pygame.Rect(817, 687, 909 - 817, 1079 - 687),
-    pygame.Rect(802, 0, 1095 - 802, 143 - 0),
-    pygame.Rect(1130, 0, 1333 - 1130, 163 - 0),
-    pygame.Rect(1351, 11, 1589 - 1351, 93 - 11),
-    pygame.Rect(1713, 0, 2800 - 1713, 80 - 0),
-    pygame.Rect(1977, 46, 2800 - 1977, 205 - 46),
-    pygame.Rect(2355, 150, 2800 - 2355, 421 - 150),
-    pygame.Rect(1120, 528, 2074 - 1120, 908 - 528),
-]
-
 # Przycisk menu
 rack_image = pygame.image.load("Rack.png").convert_alpha()
 rack_original = rack_image
@@ -95,12 +75,26 @@ rack_rect = rack_image.get_rect()
 rack_rect.topright = (screen_width - 10, 10)
 menu_open = False
 
-# Funkcje
+# Funkcje kolizji
+def is_blocked(x, y):
+    """Sprawdza czy dany piksel jest zablokowany (czerwony)"""
+    if 0 <= x < map_width and 0 <= y < map_height:
+        color = collision_map.get_at((int(x), int(y)))
+        return color.r == 255 and color.g == 0 and color.b == 0
+    return True  # traktuj poza mapą jako zablokowane
+
 def check_collision(new_x, new_y):
-    temp_rect = pygame.Rect(new_x, new_y, char_width, char_height)
-    return any(temp_rect.colliderect(rect) for rect in blocked_areas)
+    """Sprawdza kolizję dla 4 rogów postaci"""
+    corners = [
+        (new_x, new_y),
+        (new_x + char_width - 1, new_y),
+        (new_x, new_y + char_height - 1),
+        (new_x + char_width - 1, new_y + char_height - 1)
+    ]
+    return any(is_blocked(x, y) for x, y in corners)
 
 def is_near(x1, y1, x2, y2, distance=50):
+    """Sprawdza czy pozycje są blisko siebie"""
     return abs(x1 - x2) < distance and abs(y1 - y2) < distance
 
 clock = pygame.time.Clock()
@@ -183,7 +177,7 @@ while running:
             walk_timer = 0
             walk_frame = 0
 
-# Interakcja z kryształem
+    # Interakcja z kryształem
     if not crystal_taken and is_near(char_x, char_y, *crystal_pos):
         if interact:
             crystal_taken = True
@@ -240,9 +234,6 @@ while running:
 
     if character:
         screen.blit(character, (char_x - camera_x, char_y - camera_y))
-
-    for rect in blocked_areas:
-        pygame.draw.rect(screen, (255, 0, 0), (rect.x - camera_x, rect.y - camera_y, rect.width, rect.height), 2)
 
     mouse_pos = pygame.mouse.get_pos()
     current_rack = rack_hovered if rack_rect.collidepoint(mouse_pos) else rack_original
