@@ -1,6 +1,6 @@
 import pygame
 import time
-import menu 
+import menu  # Upewnij się, że ten moduł istnieje i działa poprawnie
 import requests
 import json
 import os
@@ -42,8 +42,8 @@ REMEMBER_ME_FILE = 'remember_me.json'
 LOGIN_BACKGROUND_PATH = 'lib/graphic/menu/Background.png'
 try:
     LOGIN_BACKGROUND_IMAGE = pygame.image.load(LOGIN_BACKGROUND_PATH).convert_alpha()
-    LOGIN_BACKGROUND_SCALE = 0.6
-    scaled_login_bg_width = int(screen_width * LOGIN_BACKGROUND_SCALE)
+    LOGIN_BACKGROUND_SCALE = 0.5
+    scaled_login_bg_width = int(screen_width * 0.4)
     scaled_login_bg_height = int(screen_height * LOGIN_BACKGROUND_SCALE)
     LOGIN_BACKGROUND_IMAGE = pygame.transform.scale(LOGIN_BACKGROUND_IMAGE, (scaled_login_bg_width, scaled_login_bg_height))
     LOGIN_BACKGROUND_RECT = LOGIN_BACKGROUND_IMAGE.get_rect(center=(screen_width // 2, screen_height // 2))
@@ -54,7 +54,7 @@ except pygame.error:
     LOGIN_BACKGROUND_RECT = LOGIN_BACKGROUND_IMAGE.get_rect(center=(screen_width // 2, screen_height // 2))
 
 
-# Wczytanie mapy
+# Wczytanie map
 try:
     map_width = 2800
     map_height = 2800
@@ -188,13 +188,12 @@ menu_open = False
 
 # Stan gry
 current_map = "outside"
-transition_alpha = 0
-transition_speed = 10
-transition_state = "idle"
-interior_trigger = (2290, 290)
-exit_trigger = (1767, 655)
-interior_spawn = (interior_width // 2, interior_height // 2)
-outside_spawn = interior_trigger
+# Usunięto zmienne transition_alpha i transition_speed, transition_state
+# Bo nie chcemy animacji ściemniania
+interior_trigger = (2290, 290) # Pozycja wejścia do budynku na mapie zewnętrznej
+exit_trigger = (1767, 655) # Pozycja wyjścia z budynku na mapie wewnętrznej
+interior_spawn = (interior_width // 2, interior_height // 2) # Pozycja postaci po wejściu do budynku
+outside_spawn = interior_trigger # Pozycja postaci po wyjściu z budynku (przy wejściu)
 
 # --- Nowe elementy dla quizu ---
 # Pozycja triggera quizu na mapie interior
@@ -231,7 +230,7 @@ class UserListPopup:
                 elif event.button == 5: # Scroll down
                     max_scroll = max(0, len(self.filtered_users) * self.item_height - (self.rect.height - 50))
                     self.scroll_offset = min(max_scroll, self.scroll_offset + self.item_height)
-
+                
                 # Obsługa kliknięć na użytkowników/przycisk zaproszenia
                 display_area_rect = pygame.Rect(self.rect.x + 5, self.rect.y + 50, self.rect.width - 10, self.rect.height - 55)
 
@@ -251,7 +250,7 @@ class UserListPopup:
                         global_invite_button_rect.y += display_area_rect.y
 
                         if global_invite_button_rect.collidepoint(event.pos) and event.button == 1:
-                            return user 
+                            return user  
         return None
 
     def update_filter(self):
@@ -283,24 +282,26 @@ class UserListPopup:
             invite_text_surface = small_font.render("Zaproś", True, WHITE)
             invite_text_rect = invite_text_surface.get_rect(center=invite_button_rect.center)
             temp_surface.blit(invite_text_surface, invite_text_rect)
-        
+            
         screen.blit(temp_surface, display_area_rect.topleft)
 
 # Funkcje kolizji
-def is_blocked(x, y, map_type="outside"):
+def is_blocked(x, y, map_type):
+    """Sprawdza czy dany piksel jest zablokowany (czerwony) na konkretnej mapie kolizji."""
     if map_type == "outside":
         map_surface = collision_map
         w, h = map_width, map_height
-    else:
+    else: # map_type == "interior"
         map_surface = interior_collision
         w, h = interior_width, interior_height
-    
+        
     if 0 <= x < w and 0 <= y < h:
         color = map_surface.get_at((int(x), int(y)))
         return color.r == 255 and color.g == 0 and color.b == 0
-    return True
+    return True  # traktuj poza mapą jako zablokowane
 
 def check_collision(new_x, new_y):
+    """Sprawdza kolizję dla 4 rogów postaci na aktualnej mapie."""
     corners = [
         (new_x, new_y),
         (new_x + char_width - 1, new_y),
@@ -308,10 +309,10 @@ def check_collision(new_x, new_y):
         (new_x + char_width - 1, new_y + char_height - 1)
     ]
     
-    map_type = "interior" if current_map == "interior" else "outside"
-    return any(is_blocked(x, y, map_type) for x, y in corners)
+    return any(is_blocked(x, y, current_map) for x, y in corners)
 
 def is_near(x1, y1, x2, y2, distance=50):
+    """Sprawdza czy pozycje są blisko siebie."""
     return abs(x1 - x2) < distance and abs(y1 - y2) < distance
 
 def is_inside_circle(px, py, circle_x, circle_y, radius):
@@ -319,10 +320,10 @@ def is_inside_circle(px, py, circle_x, circle_y, radius):
     distance = ((px - circle_x)**2 + (py - circle_y)**2)**0.5
     return distance <= radius
 
+# Funkcja start_transition jest teraz zbędna, ponieważ nie ma ściemniania.
+# Możemy ją usunąć lub zostawić pustą, jeśli jest gdzieś wywoływana.
 def start_transition():
-    global transition_state, transition_alpha
-    transition_state = "fade_out"
-    transition_alpha = 0
+    pass # Nic nie robi, bo nie ma przejścia z efektem ściemniania
 
 # --- Logika ekranu logowania ---
 class InputBox:
@@ -510,10 +511,10 @@ class Checkbox:
         pygame.draw.rect(screen, WHITE, self.rect, 2)
         if self.checked:
             pygame.draw.line(screen, GREEN, (self.rect.x + 3, self.rect.y + self.size // 2),
-                                            (self.rect.x + self.size // 2, self.rect.y + self.size - 3), 3)
+                                             (self.rect.x + self.size // 2, self.rect.y + self.size - 3), 3)
             pygame.draw.line(screen, GREEN, (self.rect.x + self.size // 2, self.rect.y + self.size - 3),
-                                            (self.rect.x + self.size - 3, self.rect.y + 3), 3)
-        
+                                             (self.rect.x + self.size - 3, self.rect.y + 3), 3)
+            
         text_surface = small_font.render(self.text, True, WHITE)
         screen.blit(text_surface, (self.rect.x + self.size + 10, self.rect.y + (self.size - text_surface.get_height()) // 2))
 
@@ -687,7 +688,6 @@ running = True
 # Popup do zapraszania użytkowników
 invite_popup = None
 # Mockowa lista aktywnych użytkowników (do zastąpienia przez serwer)
-# Usunięto host_username z tej listy, ponieważ dodajemy go osobno na początku
 MOCK_ACTIVE_USERS = ["Gracz1", "Gracz2", "Gracz3", "Asia", "Tomek", "Anna", "Zenek", "Krzysiek", "Ola", "Piotr"]
 
 # Funkcja do "zapraszania" gracza (na razie print)
@@ -738,18 +738,17 @@ for _ in range(2):
 
 while running:
     keys = pygame.key.get_pressed()
-    interact = False
+    interact = False # Resetuj interact na początku każdej klatki
 
     for event in pygame.event.get():
-		
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.K_ESCAPE:
-                if menu_open:
-                    menu_open = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
-                interact = True
+                interact = True # Ustaw interact na True tylko przy naciśnięciu E
+            elif event.key == pygame.K_ESCAPE: # Dodano obsługę ESCAPE dla zamykania menu
+                if menu_open:
+                    menu_open = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if not menu_open and rack_rect.collidepoint(pygame.mouse.get_pos()):
                 menu_open = True
@@ -757,66 +756,16 @@ while running:
                 x_rect = menu.draw_menu(screen)
                 if x_rect and x_rect.collidepoint(pygame.mouse.get_pos()):
                     menu_open = False
-            
-            
-    # --- Obsługa przycisków "Zaproś" w lobby quizu ---
-    if quiz_state == "lobby" and invite_popup is None:
-        # Aktualizujemy pozycje przycisków i sprawdzamy kliknięcia
-        for i in range(1, 3):  # Slot 1 i Slot 2 (indeksy 1 i 2)
-            # Oblicz pozycję przycisku dla tego slotu
-            slot_index = i
-            slot_x = start_x + slot_index * (player_slot_width + slot_spacing)
-            
-            # Jeśli slot jest pusty, ustawiamy i rysujemy przycisk
-            if slot_index >= len(quiz_players):
-                btn_index = i - 1  # Mapowanie: slot 1 -> przycisk 0, slot 2 -> przycisk 1
-                if btn_index < len(invite_buttons):
-                    # Oblicz pozycję przycisku
-                    invite_button_x = slot_x + (player_slot_width - 70) // 2
-                    invite_button_y = player_panel_y + player_slot_height + 15
-                    
-                    # Aktualizuj pozycję przycisku
-                    invite_buttons[btn_index].update_position(invite_button_x, invite_button_y)
-                    
-                    # Sprawdź kliknięcie
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        if invite_buttons[btn_index].handle_event(event):
-                            break
-
+            # Obsługa eventów dla popupu zapraszania
             if invite_popup:
-                invited = invite_popup.handle_event(event)
-                if invited:
-                    send_invite(invited)
-                    invite_popup = None
-                elif not invite_popup.rect.collidepoint(event.pos) and not invite_popup.search_input.rect.collidepoint(event.pos):
-                    invite_popup = None
+                invited_user = invite_popup.handle_event(event)
+                if invited_user:
+                    send_invite(invited_user)
+                    invite_popup.update_filter() # Odśwież listę po zaproszeniu
 
 
-    if invite_popup:
-        invite_popup.search_input.update()
-        invite_popup.update_filter()
-
-    if transition_state == "fade_out":
-        transition_alpha += transition_speed
-        if transition_alpha >= 255:
-            transition_alpha = 255
-            if current_map == "outside":
-                current_map = "interior"
-                char_x = interior_spawn[0] - char_width // 2
-                char_y = interior_spawn[1] - char_height // 2
-            else:
-                current_map = "outside"
-                char_x = outside_spawn[0] - char_width // 2
-                char_y = outside_spawn[1] - char_height // 2 + 50
-            transition_state = "fade_in"
-            
-    elif transition_state == "fade_in":
-        transition_alpha -= transition_speed
-        if transition_alpha <= 0:
-            transition_alpha = 0
-            transition_state = "idle"
-
-    if transition_state == "idle" and not menu_open and not teleporting and quiz_state == "idle":
+    # Tylko jeśli nie teleportujemy się, quiz nie jest aktywny i menu nie jest otwarte, pozwól na ruch
+    if not teleporting and not quiz_active and not menu_open:
         dx, dy = 0, 0
         if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx = -speed
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]: dx = speed
@@ -826,17 +775,18 @@ while running:
         new_x = char_x + dx
         new_y = char_y + dy
         
+        # Sprawdź kolizje na bieżącej mapie
         if not check_collision(new_x, new_y):
             char_x = new_x
             char_y = new_y
 
-        if current_map == "interior":
-            char_x = max(0, min(char_x, interior_width - char_width))
-            char_y = max(0, min(char_y, interior_height - char_height))
-        else:
+        # Ograniczenie pozycji postaci do granic mapy
+        if current_map == "outside":
             char_x = max(0, min(char_x, map_width - char_width))
             char_y = max(0, min(char_y, map_height - char_height))
-
+        else: # interior
+            char_x = max(0, min(char_x, interior_width - char_width))
+            char_y = max(0, min(char_y, interior_height - char_height))
 
         moving = dx != 0 or dy != 0
 
@@ -883,170 +833,178 @@ while running:
                 walk_timer = 0
                 walk_frame = 0
 
-        if not crystal_taken and current_map == "outside" and is_near(char_x, char_y, *crystal_pos):
-            if interact:
-                crystal_taken = True
+    # --- Logika zmiany map ---
+    # Wejście do budynku
+    if current_map == "outside" and is_near(char_x, char_y, *interior_trigger, distance=70):
+        if interact:
+            current_map = "interior"
+            char_x, char_y = interior_spawn[0] - char_width // 2, interior_spawn[1] - char_height // 2
+            print("Wszedłeś do budynku.")
 
-        if current_map == "outside":
-            for portal_pos_single in [portal1_pos, portal2_pos]:
-                if is_near(char_x, char_y, *portal_pos_single):
-                    if crystal_taken and interact:
-                        if not portal_active:
-                            portal_active = True
-                        elif portal_active and not teleporting:
-                            teleporting = True
-                            teleport_cooldown = 30
-                            character = None
-                            teleport_target = portal2_pos if portal_pos_single == portal1_pos else portal1_pos
+    # Wyjście z budynku
+    if current_map == "interior" and is_near(char_x, char_y, *exit_trigger, distance=70):
+        if interact:
+            current_map = "outside"
+            char_x, char_y = outside_spawn[0] - char_width // 2, outside_spawn[1] - char_height // 2
+            print("Wyszedłeś z budynku.")
 
-        if current_map == "outside" and is_near(char_x, char_y, *interior_trigger) and interact:
-            start_transition()
+    # --- Interakcja z kryształem ---
+    if not crystal_taken and current_map == "outside" and is_near(char_x, char_y, *crystal_pos):
+        if interact:
+            crystal_taken = True
+            print("Kryształ zebrany!") # Do celów debugowania
 
-        if current_map == "interior" and is_near(char_x, char_y, *exit_trigger) and interact:
-            start_transition()
+    # --- Interakcja z portalami ---
+    for idx, (px, py) in enumerate([portal1_pos, portal2_pos]):
+        if is_near(char_x, char_y, px, py):
+            if crystal_taken and interact: # Sprawdź, czy naciśnięto 'E' i masz kryształ
+                if not portal_active:
+                    portal_active = True
+                    print(f"Portal {idx+1} aktywowany!") # Do celów debugowania
+                elif portal_active and not teleporting:
+                    teleporting = True
+                    teleport_cooldown = 30 # Czas, w którym portal animuje i postać jest ukryta
+                    character = None # Ukryj postać
+                    # Ustaw cel teleportacji na drugi portal
+                    teleport_target = portal2_pos if (px, py) == portal1_pos else portal1_pos
+                    print(f"Rozpoczynam teleportację z portalu {idx+1} do {teleport_target}!") # Do celów debugowania
 
-        if current_map == "interior" and quiz_state == "idle":
-            char_center_x = char_x + char_width // 2
-            char_center_y = char_y + char_height // 2
-            if is_inside_circle(char_center_x, char_center_y, QUIZ_TRIGGER_POS[0], QUIZ_TRIGGER_POS[1], QUIZ_TRIGGER_RADIUS + char_width//4):
-                if interact:
-                    quiz_state = "lobby"
-                    # Upewnij się, że gospodarz jest dodany tylko raz i jest pierwszy
-                    if host_username and not any(host_username in p.split(' ')[0] for p in quiz_players):
-                        quiz_players.insert(0, f"{host_username} (Gospodarz)")
-                    print("Weszlismy do lobby quizu!")
+    # --- Animacja portali ---
+    if portal_active or teleporting: # Animuj portale, jeśli są aktywne lub w trakcie teleportacji
+        portal_timer += 1
+        if portal_timer >= 10: # Prędkość animacji portalu
+            portal_timer = 0
+            portal_frame = (portal_frame + 1) % 4 # 4 klatki animacji
+
+    # --- Obsługa teleportacji (przeniesienie postaci po odliczeniu cooldownu) ---
+    if teleporting:
+        if teleport_cooldown > 0:
+            teleport_cooldown -= 1
+        else:
+            char_x, char_y = teleport_target # Przenieś postać
+            teleporting = False # Zakończ teleportację
+            character = character_idle # Przywróć postać
+            last_move_time = time.time() # Zresetuj czas bezczynności
+            print("Teleportacja zakończona!") # Do celów debugowania
+            # Jeśli portal ma się wyłączyć po teleportacji, odkomentuj poniższą linię:
+            # portal_active = False
 
 
-        if portal_active and current_map == "outside":
-            portal_timer += 1
-            if portal_timer >= 10:
-                portal_timer = 0
-                portal_frame = (portal_frame + 1) % 4
-
-        if teleporting:
-            if teleport_cooldown > 0:
-                teleport_cooldown -= 1
-            else:
-                char_x, char_y = teleport_target
-                teleporting = False
-                character = character_idle
-                last_move_time = time.time()
-
+    # --- Logika quizu ---
     if current_map == "interior":
-        camera_x = char_x + char_width // 2 - screen_width // 2
-        camera_y = char_y + char_height // 2 - screen_height // 2
-        camera_x = max(0, min(camera_x, interior_width - screen_width))
-        camera_y = max(0, min(camera_y, interior_height - screen_height))
-    else:
-        camera_x = char_x + char_width // 2 - screen_width // 2
-        camera_y = char_y + char_height // 2 - screen_height // 2
-        camera_x = max(0, min(camera_x, map_width - screen_width))
-        camera_y = max(0, min(camera_y, map_height - screen_height))
+        if is_inside_circle(char_x + char_width // 2, char_y + char_height // 2, QUIZ_TRIGGER_POS[0], QUIZ_TRIGGER_POS[1], QUIZ_TRIGGER_RADIUS):
+            if interact and quiz_state == "idle":
+                quiz_active = True
+                quiz_state = "lobby" # Przejdź do poczekalni quizu
+                print("Wszedłeś w obszar quizu!")
 
-    if current_map == "interior":
-        screen.blit(interior_background, (0, 0), (camera_x, camera_y, screen_width, screen_height))
-        quiz_trigger_center_on_screen = (QUIZ_TRIGGER_POS[0] - camera_x, QUIZ_TRIGGER_POS[1] - camera_y)
-        pygame.draw.circle(screen, GREEN, quiz_trigger_center_on_screen, QUIZ_TRIGGER_RADIUS, 2)
-        trigger_text_surface = small_font.render(QUIZ_TRIGGER_TEXT, True, GREEN)
-        trigger_text_rect = trigger_text_surface.get_rect(center=quiz_trigger_center_on_screen)
-        screen.blit(trigger_text_surface, trigger_text_rect)
-    else:
-        screen.blit(background, (0, 0), (camera_x, camera_y, screen_width, screen_height))
+    # --- Rysowanie ---
+    # Obliczanie pozycji kamery
+    if current_map == "outside":
+        cam_map_width = map_width
+        cam_map_height = map_height
+        current_bg = background
+    else: # interior
+        cam_map_width = interior_width
+        cam_map_height = interior_height
+        current_bg = interior_background
 
+    camera_x = char_x + char_width // 2 - screen_width // 2
+    camera_y = char_y + char_height // 2 - screen_height // 2
+    camera_x = max(0, min(camera_x, cam_map_width - screen_width))
+    camera_y = max(0, min(camera_y, cam_map_height - screen_height))
+
+    # Rysowanie tła
+    screen.blit(current_bg, (0, 0), (camera_x, camera_y, screen_width, screen_height))
+
+    # Rysowanie portali (tylko na mapie zewnętrznej)
     if current_map == "outside":
         for px, py in [portal1_pos, portal2_pos]:
             if teleporting:
+                # Podczas teleportacji, portale mają animację "working"
                 frame = portal_working[portal_frame]
             elif portal_active:
+                # Gdy portal jest aktywny (po zebraniu kryształu i pierwszej interakcji), ma animację "waiting"
                 frame = portal_waiting[portal_frame]
             else:
+                # W przeciwnym razie, portal jest w stanie "idle"
                 frame = portal_image_idle
             screen.blit(frame, (px - camera_x, py - camera_y))
 
-        if not crystal_taken:
-            screen.blit(crystal_image, (crystal_pos[0] - camera_x, crystal_pos[1] - camera_y))
+    # Rysowanie kryształu, jeśli nie został zebrany (tylko na mapie zewnętrznej)
+    if not crystal_taken and current_map == "outside":
+        screen.blit(crystal_image, (crystal_pos[0] - camera_x, crystal_pos[1] - camera_y))
 
+    # Rysowanie spawnu (tylko na mapie zewnętrznej)
+    if current_map == "outside":
         screen.blit(spawn_image, (spawn_pos[0] - camera_x, spawn_pos[1] - camera_y))
+    
+    # Rysowanie triggera quizu (tylko na mapie interior)
+    if current_map == "interior":
+        quiz_trigger_screen_pos = (QUIZ_TRIGGER_POS[0] - camera_x, QUIZ_TRIGGER_POS[1] - camera_y)
+        pygame.draw.circle(screen, RED, quiz_trigger_screen_pos, QUIZ_TRIGGER_RADIUS, 2)
+        quiz_text_surface = small_font.render(QUIZ_TRIGGER_TEXT, True, WHITE)
+        quiz_text_rect = quiz_text_surface.get_rect(center=quiz_trigger_screen_pos)
+        screen.blit(quiz_text_surface, quiz_text_rect)
 
-    if character and not teleporting:
+    # Rysowanie postaci, jeśli nie jest w trakcie teleportacji (czyli character nie jest None)
+    if character:
         screen.blit(character, (char_x - camera_x, char_y - camera_y))
 
-    # Rysowanie interfejsu quizu
-    if quiz_state == "lobby":
-        player_panel_height = 100
-        player_panel_y = screen_height - QUIZ_PANEL_OFFSET_Y - player_panel_height
-        player_panel_rect = pygame.Rect(10, player_panel_y, screen_width - 20, player_panel_height)
-        pygame.draw.rect(screen, (30, 30, 30), player_panel_rect, border_radius=10)
-        pygame.draw.rect(screen, WHITE, player_panel_rect, 2, border_radius=10)
-
-        player_slot_width = 200
-        player_slot_height = 40
-        slot_spacing = 20
-
-        total_slots_width = 3 * player_slot_width + 2 * slot_spacing
-        start_x = screen_width // 2 - total_slots_width // 2
-
-        # Rysowanie 3 slotów
-        for i in range(3): # i będzie 0, 1, 2
-            slot_x = start_x + i * (player_slot_width + slot_spacing)
-            slot_y = player_panel_y + 10
-            slot_rect = pygame.Rect(slot_x, slot_y, player_slot_width, player_slot_height)
-            pygame.draw.rect(screen, (50, 50, 50), slot_rect)
-            pygame.draw.rect(screen, LIGHT_GRAY, slot_rect, 1)
-
-            if i < len(quiz_players):
-                player_name = quiz_players[i]
-                player_text = quiz_player_font.render(player_name, True, WHITE)
-                player_text_rect = player_text.get_rect(center=slot_rect.center)
-                screen.blit(player_text, player_text_rect)
-            else:
-                invite_text_surface = quiz_player_font.render("Puste miejsce", True, GRAY)
-                invite_text_rect = invite_text_surface.get_rect(center=(slot_rect.centerx, slot_rect.centery - 10))
-                screen.blit(invite_text_surface, invite_text_rect)
-
-            ### ZMIANY DLA PRZYCISKÓW ZAPROŚ I SLOTÓW GRACZY ###
-            # Rysuj przycisk "Zaproś" tylko dla slotów od indeksu 1 (drugi i trzeci slot)
-            if i >= 1: # Czyli dla i = 1 (drugi slot) i i = 2 (trzeci slot)
-                # Sprawdzamy, czy ten slot jest pusty, zanim narysujemy przycisk
-                if i >= len(quiz_players):
-                    # Pobierz odpowiedni przycisk z listy `invite_buttons`
-                    # invite_buttons[0] odpowiada drugiemu slotowi (i=1)
-                    # invite_buttons[1] odpowiada trzeciemu slotowi (i=2)
-                    invite_btn_index = i - 1 
-                    if invite_btn_index < len(invite_buttons): # Upewnij się, że indeks jest poprawny
-                        invite_btn = invite_buttons[invite_btn_index]
-                        
-                        invite_button_width = 70
-                        invite_button_height = 30
-                        invite_button_x = slot_rect.centerx - invite_button_width // 2
-                        invite_button_y = slot_rect.bottom + 5
-                        
-                        invite_btn.update_position(invite_button_x, invite_button_y)
-                        invite_btn.draw(screen)
-            ### KONIEC ZMIAN DLA PRZYCISKÓW ZAPROŚ I SLOTÓW GRACZY ###
-        
-        if len(quiz_players) == 3:
-            print("Wszyscy gracze zebrani! Rozpoczynam quiz...")
-            quiz_state = "question_phase"
-
-    if invite_popup:
-        invite_popup.draw(screen)
-
+    # Rysowanie przycisku menu
     mouse_pos = pygame.mouse.get_pos()
     current_rack = rack_hovered if rack_rect.collidepoint(mouse_pos) else rack_original
     current_rack_rect = current_rack.get_rect(topright=rack_rect.topright)
     screen.blit(current_rack, current_rack_rect)
 
+    # Rysowanie menu, jeśli otwarte
     if menu_open:
-        menu.draw_menu(screen) 
+        menu.draw_menu(screen) # Upewnij się, że menu.py działa poprawnie i rysuje się na screen
 
-    if transition_state != "idle":
-        s = pygame.Surface((screen_width, screen_height))
-        s.set_alpha(transition_alpha)
-        s.fill((0, 0, 0))
-        screen.blit(s, (0,0))
 
+    # --- Rysowanie panelu quizu, jeśli jest aktywny ---
+    if quiz_active:
+        panel_height = 250 # Stała wysokość panelu quizu
+        panel_rect = pygame.Rect(screen_width // 2 - 300, screen_height - panel_height - QUIZ_PANEL_OFFSET_Y, 600, panel_height)
+        pygame.draw.rect(screen, BLACK, panel_rect, border_radius=10)
+        pygame.draw.rect(screen, WHITE, panel_rect, 2, border_radius=10)
+
+        title_quiz_text = font.render("Poczekalnia Quizu", True, WHITE)
+        title_quiz_rect = title_quiz_text.get_rect(center=(panel_rect.centerx, panel_rect.y + 20))
+        screen.blit(title_quiz_text, title_quiz_rect)
+
+        # Wyświetlanie graczy i przycisków zaproś
+        player_slot_start_y = panel_rect.y + 60
+        player_slot_height = 40
+        for i in range(3): # Maksymalnie 3 graczy (Gospodarz + 2 zaproszonych)
+            slot_y = player_slot_start_y + i * player_slot_height
+            
+            player_name = quiz_players[i] if i < len(quiz_players) else f"Wolny slot {i+1}"
+            
+            # Kolor dla gospodarza
+            player_color = GREEN if i == 0 and host_username in player_name else WHITE
+            
+            player_text_surface = quiz_player_font.render(player_name, True, player_color)
+            screen.blit(player_text_surface, (panel_rect.x + 20, slot_y + 5))
+
+            # Przycisk "Zaproś" tylko dla wolnych slotów (poza gospodarzem)
+            if i > 0 and i >= len(quiz_players) and len(quiz_players) < 3:
+                invite_btn = invite_buttons[i-1] # Pobierz odpowiedni przycisk
+                invite_btn.update_position(panel_rect.right - 100, slot_y + 5) # Aktualizuj pozycję przycisku
+                invite_btn.draw(screen) # Rysuj przycisk
+
+                # Obsługa zdarzeń dla przycisków zaproszenia (tylko jeśli quiz jest aktywny)
+                if quiz_active: # Upewnij się, że przyciski reagują tylko w quiz_active
+                    invite_btn.handle_event(event) # Przekazujemy eventy do przycisku
+
+
+    # Rysowanie popupu zapraszania, jeśli jest aktywny
+    if invite_popup:
+        invite_popup.draw(screen)
+        invite_popup.update_filter() # Aktualizuj filtr za każdym razem, gdy rysujesz
+
+    # Aktualizacja wyświetlania
     pygame.display.update()
-    clock.tick(60)
+    clock.tick(60) # Ograniczenie klatek na sekundę do 60
 
 pygame.quit()
