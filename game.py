@@ -15,41 +15,41 @@ pygame.display.set_caption("Gra z portalami i kryształem")
 # Wczytanie mapy
 map_width = 2800
 map_height = 2800
-background = pygame.image.load('map.png').convert()
+background = pygame.image.load('lib/graphic/maps/main/map.png').convert()
 
 # Wczytanie mapy kolizji (czerwony = zablokowany)
-collision_map = pygame.image.load('collision_map.png').convert()
+collision_map = pygame.image.load('lib/graphic/maps/main/collision_map.png').convert()
 
 # Wczytanie wnętrza budynku
-interior_background = pygame.image.load('interior_map.png').convert()
-interior_collision = pygame.image.load('interior_collision.png').convert()
+interior_background = pygame.image.load('lib/graphic/maps/interior/interior_map.png').convert()
+interior_collision = pygame.image.load('lib/graphic/maps/interior/interior_collision.png').convert()
 interior_width = interior_background.get_width()
 interior_height = interior_background.get_height()
 
 # Wczytanie animacji postaci
-character_idle = pygame.image.load('character.png').convert_alpha()
-walk_right = [pygame.image.load(f'character{i}.png').convert_alpha() for i in range(1, 5)]
-walk_left  = [pygame.image.load(f'character{i}.png').convert_alpha() for i in range(5, 9)]
-walk_up    = [pygame.image.load(f'character{i}.png').convert_alpha() for i in range(9, 11)]
-walk_down  = [pygame.image.load(f'character{i}.png').convert_alpha() for i in range(11, 13)]
-character_look_left = pygame.image.load('characterlookleft.png').convert_alpha()
-character_look_right = pygame.image.load('characterlookright.png').convert_alpha()
+character_idle = pygame.image.load('lib/graphic/character/character.png').convert_alpha()
+walk_right = [pygame.image.load(f'lib/graphic/character/character{i}.png').convert_alpha() for i in range(1, 5)]
+walk_left  = [pygame.image.load(f'lib/graphic/character/character{i}.png').convert_alpha() for i in range(5, 9)]
+walk_up    = [pygame.image.load(f'lib/graphic/character/character{i}.png').convert_alpha() for i in range(9, 11)]
+walk_down  = [pygame.image.load(f'lib/graphic/character/character{i}.png').convert_alpha() for i in range(11, 13)]
+character_look_left = pygame.image.load('lib/graphic/character/characterlookleft.png').convert_alpha()
+character_look_right = pygame.image.load('lib/graphic/character/characterlookright.png').convert_alpha()
 
 # Portal i kryształ
 portal1_pos = (1838, 152)
 portal2_pos = (1437, 2305)
-portal_image_idle = pygame.image.load("EmptyPortal.png").convert_alpha()
-portal_waiting = [pygame.image.load(f"PortalWaiting{i}.png").convert_alpha() for i in range(1, 5)]
-portal_working = [pygame.image.load(f"PortalWorking{i}.png").convert_alpha() for i in range(1, 5)]
+portal_image_idle = pygame.image.load("lib/graphic/portal/EmptyPortal.png").convert_alpha()
+portal_waiting = [pygame.image.load(f"lib/graphic/portal/PortalWaiting{i}.png").convert_alpha() for i in range(1, 5)]
+portal_working = [pygame.image.load(f"lib/graphic/portal/PortalWorking{i}.png").convert_alpha() for i in range(1, 5)]
 portal_frame = 0
 portal_timer = 0
 
 # Posąg startowy (spawn)
 spawn_pos = (1350, 1560)
-spawn_image = pygame.image.load("Spawn.png").convert_alpha()
+spawn_image = pygame.image.load("lib/graphic/others/Spawn.png").convert_alpha()
 
 crystal_pos = (2565, 688)
-crystal_image = pygame.image.load("Crystal.png").convert_alpha()
+crystal_image = pygame.image.load("lib/graphic/others/Crystal.png").convert_alpha()
 crystal_taken = False
 
 portal_active = False
@@ -75,7 +75,7 @@ idle_stage = 0
 idle_triggered = False
 
 # Przycisk menu
-rack_image = pygame.image.load("Rack.png").convert_alpha()
+rack_image = pygame.image.load("lib/graphic/menu/Rack.png").convert_alpha()
 rack_original = rack_image
 rack_hovered = pygame.transform.scale(rack_image, (int(rack_image.get_width() * 0.9), int(rack_image.get_height() * 0.9)))
 rack_rect = rack_image.get_rect()
@@ -87,8 +87,8 @@ current_map = "outside"  # "outside" lub "interior"
 transition_alpha = 0
 transition_speed = 10
 transition_state = "idle"  # "fade_out", "fade_in", "idle"
-interior_trigger = (2290, 290)   # wejście do budynku
-exit_trigger = (1767, 655)       # wyjście z budynku (na mapie interior)
+interior_trigger = (2290, 290)    # wejście do budynku
+exit_trigger = (1767, 655)        # wyjście z budynku (na mapie interior)
 interior_spawn = (interior_width // 2, interior_height // 2)
 outside_spawn = interior_trigger  # przy wyjściu wracamy w okolice trigera wejścia
 
@@ -101,7 +101,7 @@ def is_blocked(x, y, map_type="outside"):
     else:
         map_surface = interior_collision
         w, h = interior_width, interior_height
-        
+    
     if 0 <= x < w and 0 <= y < h:
         color = map_surface.get_at((int(x), int(y)))
         return color.r == 255 and color.g == 0 and color.b == 0
@@ -145,6 +145,7 @@ while running:
             if not menu_open and rack_rect.collidepoint(pygame.mouse.get_pos()):
                 menu_open = True
             elif menu_open:
+                # Assuming menu.py has a draw_menu function that returns the 'x' button rect
                 x_rect = menu.draw_menu(screen)
                 if x_rect.collidepoint(pygame.mouse.get_pos()):
                     menu_open = False
