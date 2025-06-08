@@ -741,43 +741,7 @@ while running:
     interact = False
 
     for event in pygame.event.get():
-		for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.K_ESCAPE:
-            if menu_open:
-                menu_open = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_e:
-                interact = True
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            # NOWY KOD - Obsługa przycisków "Zaproś" 
-            if quiz_state == "lobby" and invite_popup is None:
-                for i in range(1, 3):  # Slot 1 i Slot 2 (indeksy 1 i 2)
-                    if i >= len(quiz_players):  # Jeśli slot jest pusty
-                        btn_index = i - 1
-                        if btn_index < len(invite_buttons):
-                            if invite_buttons[btn_index].handle_event(event):
-                                print(f"Kliknięto przycisk Zaproś dla slotu {i}")
-                                break
-            
-            # Obsługa popup zapraszania
-            if invite_popup:
-                invited = invite_popup.handle_event(event)
-                if invited:
-                    send_invite(invited)
-                    invite_popup = None
-                elif event.type == pygame.MOUSEBUTTONDOWN and not invite_popup.rect.collidepoint(event.pos):
-                    invite_popup = None
-            
-            # RESZTA ISTNIEJĄCEGO KODU obsługi myszy...
-            elif not menu_open and rack_rect.collidepoint(pygame.mouse.get_pos()):
-                menu_open = True
-            elif menu_open:
-                x_rect = menu.draw_menu(screen)
-                if x_rect and x_rect.collidepoint(pygame.mouse.get_pos()):
-                    menu_open = False
-
+		
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.K_ESCAPE:
