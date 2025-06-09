@@ -12,22 +12,22 @@ buttons = []
 close_button = None
 
 button_names = [
-    "ZalogujButton.png",
-    "RejestracjaButton.png",
-    "ZaprosButton.png",
-    "UstawieniaButton.png",
-    "ZapisButton.png",
-    "WyjscieButton.png"  # <- przycisk wyjścia
+    "lib/graphic/menu/ZalogujButton.png",
+    "lib/graphic/menu/RejestracjaButton.png",
+    "lib/graphic/menu/ZaprosButton.png",
+    "lib/graphic/menu/UstawieniaButton.png",
+    "lib/graphic/menu/ZapisButton.png",
+    "lib/graphic/menu/WyjscieButton.png"  # <- przycisk wyjścia
 ]
 
 def draw_menu(screen):
     global assets_loaded, background, menu_banner, buttons, close_button
 
     if not assets_loaded:
-        background = load_image("Background.png")
-        menu_banner = load_image("Menu.png")
+        background = load_image("lib/graphic/menu/Background.png")
+        menu_banner = load_image("lib/graphic/menu/Menu.png")
         buttons = [load_image(name) for name in button_names]
-        close_button = load_image("X.png")
+        close_button = load_image("lib/graphic/menu/X.png")
         assets_loaded = True
 
     bg_width, bg_height = screen.get_size()
